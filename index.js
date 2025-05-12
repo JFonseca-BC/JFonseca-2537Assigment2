@@ -38,7 +38,10 @@ const client = new MongoClient(mongoUri, {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-    }
+    },
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    tlsInsecure: false
 });
 
 let db;
