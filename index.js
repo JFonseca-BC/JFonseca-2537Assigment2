@@ -288,33 +288,8 @@ app.get('/members', isAuthenticated, (req, res) => {
     });
 });
 
-async function verifyAdminStatus(req, res, next) {
-    if (!req.session.authenticated) return next();
-    
-    try {
-        const user = await userCollection.findOne(
-            { _id: new ObjectId(req.session.userId) },
-            { projection: { user_type: 1 } }
-        );
-        
-        if (user && user.user_type !== req.session.user_type) {
-            // Role changed in DB - update session
-            req.session.user_type = user.user_type;
-            req.session.save(err => {
-                if (err) console.error("Session save error:", err);
-                next();
-            });
-            return;
-        }
-        next();
-    } catch (err) {
-        console.error("Role verification error:", err);
-        next();
-    }
-}
-
 // Admin Route
-app.get('/admin', isAuthenticated, verifyAdminStatus, isAdmin, async (req, res) => {
+app.get('/admin', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const users = await userCollection.find({}, { projection: { name: 1, email: 1, user_type: 1, _id: 1 } }).toArray();
 
@@ -337,13 +312,14 @@ app.get('/admin', isAuthenticated, verifyAdminStatus, isAdmin, async (req, res) 
     }
 });
 
-// Promote User Route
+
 app.post('/promote/:userId', isAuthenticated, isAdmin, async (req, res) => {
     const userIdToPromote = req.params.userId;
 
-    if (!ObjectId.isValid(userIdToPromote)) {
+     if (!ObjectId.isValid(userIdToPromote)) {
         return res.status(400).send("Invalid user ID format.");
-    }
+     }
+
 
     try {
         const result = await userCollection.updateOne(
@@ -354,14 +330,11 @@ app.post('/promote/:userId', isAuthenticated, isAdmin, async (req, res) => {
         if (result.matchedCount === 0) {
             return res.status(404).send("User not found.");
         }
-        
         if (result.modifiedCount === 1) {
             console.log(`User ${userIdToPromote} promoted to admin.`);
+             // Check if the promoted user is the currently logged-in admin
             if (req.session.userId.equals(new ObjectId(userIdToPromote))) {
                 req.session.user_type = 'admin';
-                // Updated after setTimeout lecture
-                setTimeout(() => res.redirect('/admin'), 100);
-                return;
             }
         } else {
             console.log(`User ${userIdToPromote} already admin or update failed.`);
@@ -371,13 +344,13 @@ app.post('/promote/:userId', isAuthenticated, isAdmin, async (req, res) => {
     } catch (err) {
         console.error("Promote user error:", err);
         res.status(500).render('error', {
-            errorTitle: "Server Error",
-            errorMessage: 'Failed to promote user.',
-            backLink: '/admin',
-            user: req.session.name,
-            isLoggedIn: req.session.authenticated,
-            isAdmin: true
-        });
+             errorTitle: "Server Error",
+             errorMessage: 'Failed to promote user.',
+             backLink: '/admin',
+             user: req.session.name,
+             isLoggedIn: req.session.authenticated,
+             isAdmin: true
+         });
     }
 });
 
@@ -385,11 +358,13 @@ app.post('/promote/:userId', isAuthenticated, isAdmin, async (req, res) => {
 app.post('/demote/:userId', isAuthenticated, isAdmin, async (req, res) => {
     const userIdToDemote = req.params.userId;
 
-    if (!ObjectId.isValid(userIdToDemote)) {
+     if (!ObjectId.isValid(userIdToDemote)) {
         return res.status(400).send("Invalid user ID format.");
-    }
+     }
+
 
     try {
+        // Use updateOne to set user_type to 'user'
         const result = await userCollection.updateOne(
             { _id: new ObjectId(userIdToDemote) },
             { $set: { user_type: 'user' } }
@@ -398,15 +373,13 @@ app.post('/demote/:userId', isAuthenticated, isAdmin, async (req, res) => {
         if (result.matchedCount === 0) {
             return res.status(404).send("User not found.");
         }
-        
-        if (result.modifiedCount === 1) {
+         if (result.modifiedCount === 1) {
             console.log(`User ${userIdToDemote} demoted to user.`);
-            if (req.session.userId.equals(new ObjectId(userIdToDemote))) {
-                req.session.user_type = 'user';
-                // Updated after setTimeout lecture
-                setTimeout(() => res.redirect('/members'), 100);
-                return;
-            }
+             // Check if the demoted user is the currently logged-in admin
+             if (req.session.userId.equals(new ObjectId(userIdToDemote))) {
+                 req.session.user_type = 'user';
+                  return res.redirect('/members');
+             }
         } else {
             console.log(`User ${userIdToDemote} already user or update failed.`);
         }
@@ -414,14 +387,14 @@ app.post('/demote/:userId', isAuthenticated, isAdmin, async (req, res) => {
         res.redirect('/admin');
     } catch (err) {
         console.error("Demote user error:", err);
-        res.status(500).render('error', {
-            errorTitle: "Server Error",
-            errorMessage: 'Failed to demote user.',
-            backLink: '/admin',
-            user: req.session.name,
-            isLoggedIn: req.session.authenticated,
-            isAdmin: true
-        });
+         res.status(500).render('error', {
+             errorTitle: "Server Error",
+             errorMessage: 'Failed to demote user.',
+             backLink: '/admin',
+             user: req.session.name,
+             isLoggedIn: req.session.authenticated,
+             isAdmin: true
+         });
     }
 });
 
