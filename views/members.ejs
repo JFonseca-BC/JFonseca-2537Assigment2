@@ -7,14 +7,10 @@
 <div class="row">
     <% images.forEach(function(imagePath) { %>
         <div class="col-lg-4 col-md-6 col-sm-12 mb-4"> <div class="card">
-                <img src="<%= imagePath %>" class="card-img-top" alt="Member Image" style="height: 250px; object-fit: cover;">
+                <img src="<%= imagePath %>" class="card-img-top" alt="Member Image" style="height: auto; object-fit: cover;">
                 </div>
         </div>
     <% }); %>
-</div>
-
-<div class="mt-4">
-    <a href="/logout" class="btn btn-secondary">Log Out</a>
 </div>
 
 
