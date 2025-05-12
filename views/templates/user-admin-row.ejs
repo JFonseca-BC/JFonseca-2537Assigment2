@@ -1,0 +1,16 @@
+<tr>
+    <td><%= user.name %></td>
+    <td><%= user.email %></td>
+    <td><%= user.user_type %></td>
+    <td>
+        <% if (user.user_type === 'user') { %>
+            <form action="/promote/<%= user._id %>" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-success btn-sm">Promote to Admin</button>
+            </form>
+        <% } else { %>
+             <form action="/demote/<%= user._id %>" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-warning btn-sm">Demote to User</button>
+            </form>
+        <% } %>
+        </td>
+</tr>
